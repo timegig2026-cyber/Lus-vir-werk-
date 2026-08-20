@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account and profile information",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "location": { "type": "string" },
+        "role": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "JobListing": {
+      "title": "JobListing",
+      "description": "Job requests and listings created by users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "location": { "type": "string" },
+        "budget": { "type": "string" },
+        "urgency": { "type": "string" },
+        "status": { "type": "string" },
+        "postedBy": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Service bookings and appointments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "workerName": { "type": "string" },
+        "customerName": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "UserProfile",
+      "description": "Registered users and profile data"
+    },
+    "jobs": {
+      "schema": "JobListing",
+      "description": "Community job postings and requests"
+    },
+    "bookings": {
+      "schema": "Booking",
+      "description": "Service bookings and reservations"
+    }
+  }
+}

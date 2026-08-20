@@ -20,6 +20,7 @@ import {
   Trash2,
   UserCheck
 } from 'lucide-react';
+import { db, collection, doc, setDoc, onSnapshot, query, orderBy } from './lib/firebase';
 
 interface ApplicantDoc {
   id: string;
@@ -165,7 +166,7 @@ export default function App() {
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
 
-  // Job Box / Applicants State (Persisted in localStorage for real user uploads)
+  // Job Box / Applicants State (Persisted in Firestore backend and localStorage fallback)
   const [applicants, setApplicants] = useState<ApplicantDoc[]>(() => {
     const saved = localStorage.getItem('go2guys_applicants');
     if (saved) {
@@ -188,6 +189,34 @@ export default function App() {
       }
     ];
   });
+
+  // Real-time Firestore backend sync
+  useEffect(() => {
+    try {
+      const q = collection(db, 'applicants');
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const docs: ApplicantDoc[] = [];
+          snapshot.forEach((d) => {
+            const data = d.data() as ApplicantDoc;
+            docs.push({
+              ...data,
+              id: d.id
+            });
+          });
+          if (docs.length > 0) {
+            setApplicants(docs);
+            localStorage.setItem('go2guys_applicants', JSON.stringify(docs));
+          }
+        }
+      }, (err) => {
+        console.warn('Firestore snapshot listener note:', err);
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firestore initialization note:', err);
+    }
+  }, []);
 
   // Admin Wallpaper & Blur State
   const [wallpaperUrl, setWallpaperUrl] = useState<string | null>(() => localStorage.getItem('go2guys_wallpaper') || null);
@@ -219,7 +248,7 @@ export default function App() {
   const [pinError, setPinError] = useState(false);
   const [adminFullScreenDoc, setAdminFullScreenDoc] = useState<ApplicantDoc | null>(null);
 
-  const handleUploadSubmit = (e: React.FormEvent) => {
+  const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firstName.trim() || !surname.trim() || !uploadedFile) {
       alert('Please fill in your Name, Surname, and attach your CV document.');
@@ -228,9 +257,10 @@ export default function App() {
 
     const fileUrl = URL.createObjectURL(uploadedFile);
     const profilePicUrl = profilePicFile ? URL.createObjectURL(profilePicFile) : undefined;
+    const applicantId = Date.now().toString();
 
     const newApplicant: ApplicantDoc = {
-      id: Date.now().toString(),
+      id: applicantId,
       name: firstName.trim(),
       middleName: middleName.trim() || undefined,
       surname: surname.trim(),
@@ -241,6 +271,23 @@ export default function App() {
       profilePicUrl,
       fileUrl
     };
+
+    // Save to Firestore backend database
+    try {
+      await setDoc(doc(db, 'applicants', applicantId), {
+        id: applicantId,
+        name: firstName.trim(),
+        middleName: middleName.trim() || '',
+        surname: surname.trim(),
+        jobType: selectedJobType,
+        fileName: uploadedFile.name,
+        fileSize: `${(uploadedFile.size / (1024 * 1024)).toFixed(1)} MB`,
+        uploadedAt: new Date().toLocaleDateString('en-ZA', { hour: '2-digit', minute: '2-digit' }),
+        createdAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn('Backend sync note:', err);
+    }
 
     setApplicants([newApplicant, ...applicants]);
     setShowUploadModal(false);
