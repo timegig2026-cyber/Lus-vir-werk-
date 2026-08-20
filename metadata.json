@@ -1,0 +1,6 @@
+{
+  "name": "Lus vir werk Go2Guys",
+  "description": "Document vault, help guide, about, and AI agent chat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
